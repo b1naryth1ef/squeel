@@ -4,10 +4,26 @@
 
 static int iVersion = 0;
 
-class VirtualTable : sqlite3_vtab {
-  public:
-    LuaFile *lua;
-};
+std::string VirtualTable::setup(sqlite3 *db) {
+  // Call the schema function
+  lua_getglobal(lua->L, "schema");
+  if (lua_pcall(lua->L, 0, 1, 0) != 0) {
+
+    return std::string(lua_tostring(lua->L, -1));
+  }
+
+  char *result = (char *)lua_tostring(lua->L, -1);
+  if (result == 0) {
+    return "Error parsing result";
+  }
+
+  this->vtab = new sqlite3_vtab;
+
+  if (sqlite3_declare_vtab(db, result) != SQLITE_OK) {
+    return "Error declaring virtual table";
+  }
+  return "";
+}
 
 int xCreate(sqlite3 *db, void *paux, int argc, const char* const *argv, sqlite3_vtab **vtab, char **pzErr) {
   if (argc < 5) {
@@ -47,6 +63,14 @@ int xCreate(sqlite3 *db, void *paux, int argc, const char* const *argv, sqlite3_
     *pzErr = sqlite3_mprintf("Error calling module setup function: %s", result);
     return SQLITE_ERROR;
   }
+
+  std::string err = vt->setup(db);
+  if (err != "") {
+    *pzErr = sqlite3_mprintf("Error setting up schema: %s", err.c_str());
+    return SQLITE_ERROR;
+  }
+
+  *vtab = vt->vtab;
 
   return SQLITE_OK;
 }
