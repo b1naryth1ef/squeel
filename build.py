@@ -32,7 +32,7 @@ def find_source_files(start_dir, ext=[".cpp", ".c"]):
     return result
 
 def generate_compile_command():
-    base = ["g++ -std=c++11 -Wall -fPIC -u symbol -c %s" % ' '.join(find_source_files('.'))]
+    base = ["g++ -g -std=c++11 -Wall -fPIC -u symbol -c %s" % ' '.join(find_source_files('.'))]
 
     base.append(" ".join(["-I%s" % i for i in INCLUDES]))
     base.append(" ".join(["-l%s" % i for i in LIBRARIES]))
@@ -43,7 +43,7 @@ def generate_compile_command():
 
 def generate_combine_command():
     # TODO: lolwut
-    return "g++ -shared -o squeel *.o /usr/lib/x86_64-linux-gnu/liblua5.1.so"
+    return "g++ -g -shared -o squeel *.o /usr/lib/x86_64-linux-gnu/liblua5.1.so"
 
 def build():
     ghash = os.popen("git rev-parse --verify HEAD").read().strip()

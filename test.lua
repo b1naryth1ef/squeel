@@ -10,7 +10,6 @@ end
 function schema()
   return [[
     CREATE TABLE a (
-      line INTEGER,
       date TEXT,
       host TEXT,
       msg TEXT
