@@ -3,19 +3,23 @@ import os, sys, time, fnmatch
 
 # Linked libraries
 LIBRARIES = [
-    "sqlite3"
+    "sqlite3",
+    "lua",
+    "m"
 ]
 
 # Included directories or files
 INCLUDES = [
     "src/include/",
+    "/usr/include/lua5.1"
 ]
 
 # Source files to ignore
 FIGNORES = []
 
 # Flags
-FLAGS = []
+FLAGS = [
+]
 
 def find_source_files(start_dir, ext=[".cpp", ".c"]):
     result = []
@@ -27,28 +31,34 @@ def find_source_files(start_dir, ext=[".cpp", ".c"]):
                 result.append(os.path.join(path, fname))
     return result
 
-def gen_build_command():
-    # gcc -Wall -fPIC -c *.c
-    # gcc -shared -Wl,-soname,libctest.so.1 -o libctest.so.1.0   *.o
+def generate_compile_command():
+    base = ["g++ -std=c++11 -Wall -fPIC -u symbol -c %s" % ' '.join(find_source_files('.'))]
 
-    base = ["g++ -Wall -fPIC -c"]
-    base.append(" ".join(find_source_files(".")))
     base.append(" ".join(["-I%s" % i for i in INCLUDES]))
     base.append(" ".join(["-l%s" % i for i in LIBRARIES]))
     base.append(" ".join(["-D%s" % i for i in FLAGS]))
     base.append("-L/usr/local/lib")
-    # base.append("-o %s" % BINARY_NAME)
+
     return " ".join(base)
+
+def generate_combine_command():
+    # TODO: lolwut
+    return "g++ -shared -o squeel *.o /usr/lib/x86_64-linux-gnu/liblua5.1.so"
 
 def build():
     ghash = os.popen("git rev-parse --verify HEAD").read().strip()
     FLAGS.append('GIT_HASH=\\"%s\\"' % ghash)
 
-    start = time.time()
-    i = os.system(gen_build_command())
-    i = i and os.system("gcc -shared -Wl,-soname,libsqueel.so -o libsqueel.o *.o")
+    if os.path.exists("squeel.so"):
+        os.system("rm squeel.so")
 
-    return not bool(i), (time.time() - start)
+    start = time.time()
+    os.system(generate_compile_command())
+    os.system(generate_combine_command())
+
+    os.system("rm *.o")
+    os.system("mv squeel squeel.so")
+    return (time.time() - start)
 
 if __name__ == "__main__":
     if len(sys.argv) <= 1:
@@ -57,9 +67,8 @@ if __name__ == "__main__":
 
     if sys.argv[1] == "build":
         print "Building..."
-        success, dura = build()
-        if success:
-            print "FINISHED! Took %ss" % dura
+        dura = build()
+        print "FINISHED! Took %ss" % dura
 
     if sys.argv[1] == "run":
         print "Building and running..."
