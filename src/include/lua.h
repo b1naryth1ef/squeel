@@ -3,6 +3,8 @@
 
 #include <lua.hpp>
 
+void stackDump (lua_State*);
+
 class LuaFile {
   public:
     std::string path;

@@ -1,12 +1,16 @@
 #pragma once
 #include "global.h"
 #include "vcursor.h"
+#include "dynvalue.h"
 #include "lua.h"
 
 #include <functional>
 #include <iostream>
 #include <fstream>
 #include <ostream>
+
+#include <fstream>
+#include <limits>
 
 sqlite3_module *createVirtualTableModule();
 
@@ -31,10 +35,16 @@ struct VirtualTable : sqlite3_vtab{
 
   LuaFile *lua;
 
+  std::vector<DynamicValueType> types;
+
   // Represents file information
   std::ifstream *file;
-  long int length;
+
+  int length;
+  int pos;
 
   std::string openFile(std::string);
+
+  std::string getLine(int num);
 };
 
